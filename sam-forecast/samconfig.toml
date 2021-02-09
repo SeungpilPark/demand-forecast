@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-forecast"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-2mftlkyfhxpu"
+s3_prefix = "sam-forecast"
+region = "ap-northeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["ForecastExcelFunction=983654105819.dkr.ecr.ap-northeast-2.amazonaws.com/sam-forecast-excel"]

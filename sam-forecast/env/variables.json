@@ -1,0 +1,8 @@
+{
+  "ForecastExcelFunction": {
+    "RedshiftJdbcUrl": "jdbc:redshift://forecast-cluster.ctv9ma8h2icp.ap-northeast-2.redshift.amazonaws.com:5439/dev",
+    "RedshiftUser": "root",
+    "RedshiftPassword": "!Gosu23546",
+    "ForecastBucket": "mz.spectrumdb"
+  }
+}

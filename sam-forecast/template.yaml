@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-forecast
+
+  Sample SAM Template for sam-forecast
+
+Parameters:
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: sg-0be31f704d193d19c
+
+  SubnetIds:
+    Type: CommaDelimitedList
+    Default: subnet-0d6ecc42123722f81, subnet-0387b4d46a7d8b8e4
+
+  LambdaRoleArn:
+    Type: String
+    Default: arn:aws:iam::983654105819:role/ROLE-LAMBDA-FORECAST
+
+  RedshiftJdbcUrl:
+    Type: String
+    Default: jdbc:redshift://forecast-cluster.ctv9ma8h2icp.ap-northeast-2.redshift.amazonaws.com:5439/dev
+
+  RedshiftUser:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: RedshiftUser
+
+  RedshiftPassword:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: RedshiftPassword
+
+  ForecastBucket:
+    Type: String
+    Default: mz.spectrumdb
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 20
+    VpcConfig:
+      SecurityGroupIds: !Ref SecurityGroupIds
+      SubnetIds: !Ref SubnetIds
+
+Resources:
+  ForecastExcelFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Role: !Ref LambdaRoleArn
+      PackageType: Image
+      MemorySize: 2048
+      Timeout: 300
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          RedshiftJdbcUrl: !Ref RedshiftJdbcUrl
+          RedshiftUser: !Ref RedshiftUser
+          RedshiftPassword: !Ref RedshiftPassword
+          ForecastBucket: !Ref ForecastBucket
+    Metadata:
+      DockerTag: java11-gradle-v1
+      DockerContext: ./ForecastExcelFunction
+      Dockerfile: Dockerfile
+
+Outputs:
+  ForecastExcelFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt ForecastExcelFunction.Arn
