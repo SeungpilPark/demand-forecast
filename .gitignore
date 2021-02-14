@@ -26,19 +26,6 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+### sam ###
+.aws-sam
 
-### VS Code ###
-.vscode/
-
-### UI ###
-node_modules/
-dist/
-
-### QueryDSL ###
-generated

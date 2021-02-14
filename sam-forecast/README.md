@@ -127,20 +127,6 @@ https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/s
             "Resource": [
                 "arn:aws:iam::111122223333:role/*"
             ]
-        },
-        {
-            "Sid": "APIGateway",
-            "Effect": "Allow",
-            "Action": [
-                "apigateway:DELETE",
-                "apigateway:GET",
-                "apigateway:PATCH",
-                "apigateway:POST",
-                "apigateway:PUT"
-            ],
-            "Resource": [
-                "arn:aws:apigateway:*::*"
-            ]
         }
     ]
 }
