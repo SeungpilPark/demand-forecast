@@ -65,9 +65,9 @@ Resources:
           RedshiftPassword: !Ref RedshiftPassword
           ForecastBucket: !Ref ForecastBucket
           RedshiftLimit: !Ref RedshiftLimit
-#      FileSystemConfigs:
-#        - Arn: !Ref EfsAccessPoint
-#          LocalMountPath: /mnt/efs
+      FileSystemConfigs:
+        - Arn: !Ref EfsAccessPoint
+          LocalMountPath: /mnt/efs
     Metadata:
       DockerTag: java11-gradle-v1
       DockerContext: ./ForecastExcelFunction
