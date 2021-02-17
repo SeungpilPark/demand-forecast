@@ -1,27 +1,22 @@
-package com.woowahan.market.forecast.file;
+package com.woowahan.market.forecast.direct;
 
-import com.mz.poi.mapper.ExcelMapper;
-import com.woowahan.market.forecast.excel.ForecastExcel;
-import com.woowahan.market.forecast.excel.ForecastSheet;
-import com.woowahan.market.forecast.excel.ItemRow;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.UUID;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-public class AwsS3File {
+public class DirectAwsS3File {
 
-  public static final String FILE_NAME = "fileName";
   private final S3Client s3Client;
   private final String bucketName;
 
-  public AwsS3File(String bucketName) {
+  public DirectAwsS3File(String bucketName) {
     this.s3Client =
         S3Client.builder()
             .httpClient(
@@ -33,20 +28,14 @@ public class AwsS3File {
     this.bucketName = bucketName;
   }
 
-  public void createExcel(ArrayList<ItemRow> items)
+  public void createExcel(SXSSFWorkbook workbook)
       throws IOException {
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ForecastExcel excelDto = ForecastExcel.builder()
-        .sheet(
-            ForecastSheet.builder()
-                .items(items)
-                .build()
-        )
-        .build();
 
-    SXSSFWorkbook workbook = ExcelMapper.toExcel(excelDto);
-    workbook.write(out);
-    out.close();
+    String randomFileName = UUID.randomUUID().toString() + ".xlsx";
+    File file = new File("/mnt/efs/temp/" + randomFileName);
+    FileOutputStream fos = new FileOutputStream(file);
+    workbook.write(fos);
+    fos.close();
 
     String fileName = "forecast.xlsx";
     //create s3 path
@@ -57,6 +46,7 @@ public class AwsS3File {
         .contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sh")
         .contentDisposition("attachment; filename=" + fileName)
         .build();
-    s3Client.putObject(putObjectRequest, RequestBody.fromBytes(out.toByteArray()));
+    s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
+    file.deleteOnExit();
   }
 }

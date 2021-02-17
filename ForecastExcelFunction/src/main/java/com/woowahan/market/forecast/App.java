@@ -5,11 +5,8 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woowahan.market.forecast.context.ContextHolder;
-import com.woowahan.market.forecast.excel.ItemRow;
-import com.woowahan.market.forecast.file.AwsS3File;
-import com.woowahan.market.forecast.normal.NormalFile;
-import com.woowahan.market.forecast.redshift.RedshiftClient;
-import java.util.ArrayList;
+import com.woowahan.market.forecast.direct.DirectAwsS3File;
+import com.woowahan.market.forecast.direct.DirectRedshiftClient;
 import java.util.Map;
 
 /**
@@ -23,19 +20,17 @@ public class App implements RequestHandler<Map, Object> {
 
     LambdaLogger logger = context.getLogger();
     try {
-      ArrayList<ItemRow> itemRows = RedshiftClient.connectCluster(
-          System.getenv("RedshiftJdbcUrl"),
-          System.getenv("RedshiftUser"),
-          System.getenv("RedshiftPassword"),
-          Integer.parseInt(System.getenv("RedshiftLimit"))
-      );
       logger.log(new ObjectMapper().writeValueAsString(input));
-      logger.log("itemRows: " + itemRows.size());
 
-      AwsS3File awsS3File = new AwsS3File("mz.spectrumdb");
-      awsS3File.createExcel(itemRows);
-//      NormalFile normalFile = new NormalFile("mz.spectrumdb");
-//      normalFile.createExcel(itemRows);
+      DirectAwsS3File awsS3File = new DirectAwsS3File("mz.spectrumdb");
+      awsS3File.createExcel(
+          DirectRedshiftClient.connectCluster(
+              System.getenv("RedshiftJdbcUrl"),
+              System.getenv("RedshiftUser"),
+              System.getenv("RedshiftPassword"),
+              Integer.parseInt(System.getenv("RedshiftLimit"))
+          )
+      );
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
