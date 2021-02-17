@@ -52,12 +52,13 @@ public class DirectRedshiftClient {
       props.setProperty("user", masterUsername);
       props.setProperty("password", masterUserPassword);
       conn = DriverManager.getConnection(dbURL, props);
-      conn.setAutoCommit(false);
+      //conn.setAutoCommit(false);
 
       //Try a simple query.
       logger.log("Listing system tables...");
       stmt = conn.createStatement();
-      stmt.setFetchSize(1000);
+//      int FETCH_SIZE = 100000;
+//      stmt.setFetchSize(FETCH_SIZE);
 
       String sql;
       sql =
@@ -73,7 +74,7 @@ public class DirectRedshiftClient {
       TempFile.setTempFileCreationStrategy(new DefaultTempFileCreationStrategy(dir));
 
       //Get the data from the result set.
-      SXSSFWorkbook workbook = new SXSSFWorkbook();
+      SXSSFWorkbook workbook = new SXSSFWorkbook(10000);
       Font font = workbook.createFont();
       CellStyle cellStyle = workbook.createCellStyle();
       cellStyle.setFont(font);
@@ -239,7 +240,7 @@ public class DirectRedshiftClient {
       int offset = 7 + (4 * SALES_DAYS) + (forecastStepColumnIndex * FORECAST_DAYS);
       String stepData = null;
       try {
-        stepData = rs.getString(salesStepColumns[forecastStepColumnIndex]);
+        stepData = rs.getString(forecastStepColumns[forecastStepColumnIndex]);
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
