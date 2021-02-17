@@ -23,7 +23,7 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testCompile "org.projectlombok:lombok:${lombokVersion}"
 
-    compile "com.mz:poi-mapper:1.0.8-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.0.9-SNAPSHOT"
     compile 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
     compile 'com.amazon.redshift:redshift-jdbc42:1.2.43.1067'
     compile 'software.amazon.awssdk:s3:2.9.24'

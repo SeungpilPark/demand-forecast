@@ -7,6 +7,7 @@ import com.woowahan.market.forecast.excel.ItemRow;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
@@ -43,11 +44,11 @@ public class AwsS3File {
         )
         .build();
 
-    XSSFWorkbook workbook = ExcelMapper.toExcel(excelDto);
+    SXSSFWorkbook workbook = ExcelMapper.toExcel(excelDto);
     workbook.write(out);
     out.close();
 
-    String fileName = "com.woowahan.market.forecast.xlsx";
+    String fileName = "forecast.xlsx";
     //create s3 path
     String path = "test/" + fileName;
     PutObjectRequest putObjectRequest = PutObjectRequest.builder()
