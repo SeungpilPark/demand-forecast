@@ -1,5 +1,7 @@
 package com.woowahan.market.forecast.direct;
 
+import static com.woowahan.market.forecast.context.Utils.printMemory;
+
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.woowahan.market.forecast.context.ContextHolder;
 import java.io.File;
@@ -10,7 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -36,6 +40,9 @@ public class DirectRedshiftClient {
   public static LocalDate FORECAST_START_DATE = LocalDate.of(2021, 2, 5);
   public static LocalDate FORECAST_END_DATE = LocalDate.of(2021, 2, 18);
 
+  public static int MAX_ROW_PER_SHEET = 500000;
+  public static int MAX_WINDOW_SIZE = 100;
+
   public static SXSSFWorkbook connectCluster(String dbURL, String masterUsername,
       String masterUserPassword, int limit) throws SQLException {
     LambdaLogger logger = ContextHolder.getContext().getLogger();
@@ -57,8 +64,6 @@ public class DirectRedshiftClient {
       //Try a simple query.
       logger.log("Listing system tables...");
       stmt = conn.createStatement();
-//      int FETCH_SIZE = 100000;
-//      stmt.setFetchSize(FETCH_SIZE);
 
       String sql;
       sql =
@@ -68,25 +73,35 @@ public class DirectRedshiftClient {
 
       //edit temp path
       File dir = new File("/mnt/efs/temp");
-      if (!dir.mkdirs()) {
-        throw new RuntimeException("Failed to create efs temp dir");
+      if (!dir.exists()) {
+        dir.mkdir();
       }
       TempFile.setTempFileCreationStrategy(new DefaultTempFileCreationStrategy(dir));
 
       //Get the data from the result set.
-      SXSSFWorkbook workbook = new SXSSFWorkbook(10000);
+      SXSSFWorkbook workbook = new SXSSFWorkbook(MAX_WINDOW_SIZE);
       Font font = workbook.createFont();
       CellStyle cellStyle = workbook.createCellStyle();
       cellStyle.setFont(font);
-      SXSSFSheet sheet = workbook.createSheet("수요예측");
 
-      headerRow1(sheet, cellStyle);
-      headerRow2(sheet, cellStyle);
+      AtomicInteger rowCount = new AtomicInteger(0);
+      AtomicInteger sheetIndex = new AtomicInteger(0);
 
-      AtomicInteger index = new AtomicInteger(2);
+      List<SXSSFSheet> sheetList = new ArrayList<>();
       while (rs.next()) {
-        dateRow(sheet, cellStyle, index.get(), rs);
-        index.incrementAndGet();
+        if (rowCount.get() % MAX_ROW_PER_SHEET == 0) {
+          sheetIndex.incrementAndGet();
+          sheetList.add(generateNewSheet(workbook, sheetIndex.get(), cellStyle));
+          rowCount.set(0);
+        }
+
+        if (rowCount.get() % 10000 == 0) {
+          logger.log(String.format("Sheet %s, Rows %s", sheetIndex.get(), rowCount.get()));
+          printMemory();
+        }
+
+        dateRow(sheetList.get((sheetIndex.get() - 1)), cellStyle, rowCount.get() + 2, rs);
+        rowCount.incrementAndGet();
       }
       rs.close();
       stmt.close();
@@ -100,6 +115,14 @@ public class DirectRedshiftClient {
         conn.close();
       }
     }
+  }
+
+  private static SXSSFSheet generateNewSheet(SXSSFWorkbook workbook, int sheetIndex,
+      CellStyle cellStyle) {
+    SXSSFSheet sheet = workbook.createSheet("수요예측" + sheetIndex);
+    headerRow1(sheet, cellStyle);
+    headerRow2(sheet, cellStyle);
+    return sheet;
   }
 
   private static void headerRow1(SXSSFSheet sheet, CellStyle cellStyle) {
