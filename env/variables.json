@@ -3,6 +3,7 @@
     "RedshiftJdbcUrl": "jdbc:redshift://52.79.121.12:5439/dev",
     "RedshiftUser": "root",
     "RedshiftPassword": "!Gosu23546",
-    "ForecastBucket": "mz.spectrumdb"
+    "ForecastBucket": "mz.spectrumdb",
+    "RedshiftLimit": "990000"
   }
 }

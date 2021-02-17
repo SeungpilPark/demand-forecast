@@ -2,18 +2,19 @@ package com.woowahan.market.forecast.redshift;
 
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.woowahan.market.forecast.context.ContextHolder;
+import com.woowahan.market.forecast.excel.ItemRow;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class RedshiftClient {
 
-  public static void connectCluster(String dbURL, String masterUsername,
-      String masterUserPassword) throws SQLException {
+  public static ArrayList<ItemRow> connectCluster(String dbURL, String masterUsername,
+      String masterUserPassword, int limit) throws SQLException {
     LambdaLogger logger = ContextHolder.getContext().getLogger();
 
     Connection conn = null;
@@ -43,7 +44,7 @@ public class RedshiftClient {
           + "  sku.supplier_md_name,\n"
           + "  center.code as center_code,\n"
           + "  center.name as center_name,\n"
-          + "  forecast.date_qty\n"
+          + "  forecast.date_qty as date_qty \n"
           + "from\n"
           + "(\n"
           + "\tselect \n"
@@ -65,26 +66,29 @@ public class RedshiftClient {
           + "on\n"
           + "\tcenter.code = forecast.center_code\t\n"
           + "order by sku.code,center.code\n"
-          + "limit 1000";
+          + "limit " + limit;
       ResultSet rs = stmt.executeQuery(sql);
 
       //Get the data from the result set.
-      AtomicInteger count = new AtomicInteger(0);
+      ArrayList<ItemRow> itemRows = new ArrayList<>();
       while (rs.next()) {
-        logger.log("size: " + count.incrementAndGet());
-        //Retrieve two columns.
-//        String catalog = rs.getString("sku_code");
-//        String name = rs.getString("sku_name");
-//
-//        //Display values.
-//        logger.log("Catalog: " + catalog);
-//        logger.log(", Name: " + name);
+        itemRows.add(
+            ItemRow.builder()
+                .skuCode(rs.getString("sku_code"))
+                .skuName(rs.getString("sku_name"))
+                .storageMethod(rs.getString("storage_method"))
+                .supplierName(rs.getString("supplier_name"))
+                .supplierMdName(rs.getString("supplier_md_name"))
+                .centerCode(rs.getString("center_code"))
+                .centerName(rs.getString("center_name"))
+                .data(rs.getString("date_qty"))
+                .build()
+        );
       }
-      //logger.log("size: " + rs.getFetchSize());
-
       rs.close();
       stmt.close();
       conn.close();
+      return itemRows;
     } finally {
       if (stmt != null) {
         stmt.close();
@@ -93,6 +97,5 @@ public class RedshiftClient {
         conn.close();
       }
     }
-    logger.log("Finished connectivity test.");
   }
 }

@@ -16,6 +16,10 @@ RUN cp -r $SCRATCH_DIR/*/build/distributions/lambda-build/* .
 
 FROM public.ecr.aws/lambda/java:11
 
+RUN yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
+RUN yum install curl cabextract xorg-x11-font-utils fontconfig -y
+RUN rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+
 COPY --from=build-image /var/task/META-INF ./
 COPY --from=build-image /var/task/com ./com
 COPY --from=build-image /var/task/lib/ ./lib

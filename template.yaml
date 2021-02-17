@@ -34,6 +34,14 @@ Parameters:
     Type: String
     Default: mz.spectrumdb
 
+  RedshiftLimit:
+    Type: String
+    Default: 99000
+
+  EfsAccessPoint:
+    Type: String
+    Default: arn:aws:elasticfilesystem:ap-northeast-2:983654105819:access-point/fsap-05a58ed5f07eb4193
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -48,14 +56,18 @@ Resources:
     Properties:
       Role: !Ref LambdaRoleArn
       PackageType: Image
-      MemorySize: 2048
-      Timeout: 300
+      MemorySize: 4096
+      Timeout: 600
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           RedshiftJdbcUrl: !Ref RedshiftJdbcUrl
           RedshiftUser: !Ref RedshiftUser
           RedshiftPassword: !Ref RedshiftPassword
           ForecastBucket: !Ref ForecastBucket
+          RedshiftLimit: !Ref RedshiftLimit
+      FileSystemConfigs:
+        - Arn: !Ref EfsAccessPoint
+          LocalMountPath: /mnt/efs
     Metadata:
       DockerTag: java11-gradle-v1
       DockerContext: ./ForecastExcelFunction
