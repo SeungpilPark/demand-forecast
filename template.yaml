@@ -34,10 +34,6 @@ Parameters:
     Type: String
     Default: mz.spectrumdb
 
-  RedshiftLimit:
-    Type: String
-    Default: 99000
-
   EfsAccessPoint:
     Type: String
     Default: arn:aws:elasticfilesystem:ap-northeast-2:983654105819:access-point/fsap-05a58ed5f07eb4193
@@ -54,9 +50,10 @@ Resources:
   ForecastExcelFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
+      FunctionName: ForecastExcelFunction
       Role: !Ref LambdaRoleArn
       PackageType: Image
-      MemorySize: 4096
+      MemorySize: 10240
       Timeout: 900
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
@@ -64,7 +61,6 @@ Resources:
           RedshiftUser: !Ref RedshiftUser
           RedshiftPassword: !Ref RedshiftPassword
           ForecastBucket: !Ref ForecastBucket
-          RedshiftLimit: !Ref RedshiftLimit
       FileSystemConfigs:
         - Arn: !Ref EfsAccessPoint
           LocalMountPath: /mnt/efs
@@ -72,6 +68,19 @@ Resources:
       DockerTag: java11-gradle-v1
       DockerContext: ./ForecastExcelFunction
       Dockerfile: Dockerfile
+
+  ForecastExcelFunctionAsyncConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      DestinationConfig:
+        OnFailure:
+          Destination: arn:aws:sqs:ap-northeast-2:983654105819:ForecastExcelFunctionDestination
+        OnSuccess:
+          Destination: arn:aws:sqs:ap-northeast-2:983654105819:ForecastExcelFunctionDestination
+      FunctionName: !Ref ForecastExcelFunction
+      MaximumEventAgeInSeconds: 900
+      MaximumRetryAttempts: 1
+      Qualifier: "$LATEST"
 
 Outputs:
   ForecastExcelFunction:

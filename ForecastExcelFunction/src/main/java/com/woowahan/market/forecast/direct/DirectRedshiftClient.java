@@ -32,42 +32,53 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 public class DirectRedshiftClient {
 
-  public static int SALES_DAYS = 21;
-  public static int FORECAST_DAYS = 14;
-  public static LocalDate SALES_START_DATE = LocalDate.of(2021, 1, 15);
-  public static LocalDate SALES_END_DATE = LocalDate.of(2021, 2, 4);
+  private int MAX_ROW_PER_SHEET = 500000;
+  private int MAX_WINDOW_SIZE = 100;
+  private String dbURL;
+  private String masterUsername;
+  private String masterUserPassword;
+  private int limit;
+  private String jobId;
+  private int salesDays;
+  private int forecastDays;
+  private LocalDate salesStartDate;
+  private LocalDate forecastStartDate;
 
-  public static LocalDate FORECAST_START_DATE = LocalDate.of(2021, 2, 5);
-  public static LocalDate FORECAST_END_DATE = LocalDate.of(2021, 2, 18);
+  public DirectRedshiftClient(
+      ExcelRequest excelRequest,
+      String dbURL,
+      String masterUsername,
+      String masterUserPassword) {
+    this.limit = excelRequest.getLimit();
+    this.jobId = excelRequest.getJobId();
+    this.salesDays = excelRequest.getSalesDays();
+    this.forecastDays = excelRequest.getForecastDays();
+    this.salesStartDate = LocalDate
+        .parse(excelRequest.getSalesStartDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    this.forecastStartDate = LocalDate
+        .parse(excelRequest.getForecastStartDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    this.dbURL = dbURL;
+    this.masterUsername = masterUsername;
+    this.masterUserPassword = masterUserPassword;
+  }
 
-  public static int MAX_ROW_PER_SHEET = 500000;
-  public static int MAX_WINDOW_SIZE = 100;
-
-  public static SXSSFWorkbook connectCluster(String dbURL, String masterUsername,
-      String masterUserPassword, int limit) throws SQLException {
+  public SXSSFWorkbook generateExcel() throws SQLException {
     LambdaLogger logger = ContextHolder.getContext().getLogger();
 
     Connection conn = null;
     Statement stmt = null;
     try {
-      //Open a connection and define properties.
       logger.log("Connecting to database...");
       Properties props = new Properties();
-
-      //Uncomment the following line if using a keystore.
-      //props.setProperty("ssl", "true");
       props.setProperty("user", masterUsername);
       props.setProperty("password", masterUserPassword);
       conn = DriverManager.getConnection(dbURL, props);
-      //conn.setAutoCommit(false);
-
-      //Try a simple query.
-      logger.log("Listing system tables...");
       stmt = conn.createStatement();
 
       String sql;
       sql =
-          "select * from spectrum.excel where jobid='28921229-f194-4d03-97b8-266f152def8f' order by sku_code,center_code limit "
+          "select * from spectrum.excel where jobid='" + jobId
+              + "' order by sku_code,center_code limit "
               + limit;
       ResultSet rs = stmt.executeQuery(sql);
 
@@ -117,7 +128,7 @@ public class DirectRedshiftClient {
     }
   }
 
-  private static SXSSFSheet generateNewSheet(SXSSFWorkbook workbook, int sheetIndex,
+  private SXSSFSheet generateNewSheet(SXSSFWorkbook workbook, int sheetIndex,
       CellStyle cellStyle) {
     SXSSFSheet sheet = workbook.createSheet("수요예측" + sheetIndex);
     headerRow1(sheet, cellStyle);
@@ -125,7 +136,7 @@ public class DirectRedshiftClient {
     return sheet;
   }
 
-  private static void headerRow1(SXSSFSheet sheet, CellStyle cellStyle) {
+  private void headerRow1(SXSSFSheet sheet, CellStyle cellStyle) {
     int offset = 0;
 
     SXSSFRow header = sheet.createRow(0);
@@ -138,46 +149,46 @@ public class DirectRedshiftClient {
     SXSSFCell cell2 = header.createCell(offset, CellType.STRING);
     cell2.setCellValue("판매수량");
     cell2.setCellStyle(cellStyle);
-    mergeCell(cell2, SALES_DAYS);
-    offset = offset + SALES_DAYS;
+    mergeCell(cell2, salesDays);
+    offset = offset + salesDays;
 
     SXSSFCell cell3 = header.createCell(offset, CellType.STRING);
     cell3.setCellValue("완전품절 적용");
     cell3.setCellStyle(cellStyle);
-    mergeCell(cell3, SALES_DAYS);
-    offset = offset + SALES_DAYS;
+    mergeCell(cell3, salesDays);
+    offset = offset + salesDays;
 
     SXSSFCell cell4 = header.createCell(offset, CellType.STRING);
     cell4.setCellValue("과거 기획전 판매량 반영");
     cell4.setCellStyle(cellStyle);
-    mergeCell(cell4, SALES_DAYS);
-    offset = offset + SALES_DAYS;
+    mergeCell(cell4, salesDays);
+    offset = offset + salesDays;
 
     SXSSFCell cell5 = header.createCell(offset, CellType.STRING);
     cell5.setCellValue("최근 주문수 기준 과거 주문수 보정");
     cell5.setCellStyle(cellStyle);
-    mergeCell(cell5, SALES_DAYS);
-    offset = offset + SALES_DAYS;
+    mergeCell(cell5, salesDays);
+    offset = offset + salesDays;
 
     SXSSFCell cell6 = header.createCell(offset, CellType.STRING);
     cell6.setCellValue("최대최소 치 제거 예측 수량");
     cell6.setCellStyle(cellStyle);
-    mergeCell(cell6, FORECAST_DAYS);
-    offset = offset + FORECAST_DAYS;
+    mergeCell(cell6, forecastDays);
+    offset = offset + forecastDays;
 
     SXSSFCell cell7 = header.createCell(offset, CellType.STRING);
     cell7.setCellValue("사업팀 예상 주문수 반영");
     cell7.setCellStyle(cellStyle);
-    mergeCell(cell7, FORECAST_DAYS);
-    offset = offset + FORECAST_DAYS;
+    mergeCell(cell7, forecastDays);
+    offset = offset + forecastDays;
 
     SXSSFCell cell8 = header.createCell(offset, CellType.STRING);
     cell8.setCellValue("향후 기획전 MD 의지치 반영");
     cell8.setCellStyle(cellStyle);
-    mergeCell(cell8, FORECAST_DAYS);
+    mergeCell(cell8, forecastDays);
   }
 
-  private static void headerRow2(SXSSFSheet sheet, CellStyle cellStyle) {
+  private void headerRow2(SXSSFSheet sheet, CellStyle cellStyle) {
     SXSSFRow header = sheet.createRow(1);
 
     AtomicInteger index = new AtomicInteger(0);
@@ -192,9 +203,9 @@ public class DirectRedshiftClient {
     });
 
     IntStream.range(0, 4).forEach(step_index -> {
-      IntStream.range(0, SALES_DAYS).forEach(i -> {
+      IntStream.range(0, salesDays).forEach(i -> {
             SXSSFCell cell = header.createCell(index.get(), CellType.STRING);
-            cell.setCellValue(SALES_START_DATE.plusDays(i)
+            cell.setCellValue(salesStartDate.plusDays(i)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             cell.setCellStyle(cellStyle);
             index.incrementAndGet();
@@ -203,9 +214,9 @@ public class DirectRedshiftClient {
     });
 
     IntStream.range(0, 3).forEach(step_index -> {
-      IntStream.range(0, FORECAST_DAYS).forEach(i -> {
+      IntStream.range(0, forecastDays).forEach(i -> {
             SXSSFCell cell = header.createCell(index.get(), CellType.STRING);
-            cell.setCellValue(FORECAST_START_DATE.plusDays(i)
+            cell.setCellValue(forecastStartDate.plusDays(i)
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             cell.setCellStyle(cellStyle);
             index.incrementAndGet();
@@ -214,7 +225,7 @@ public class DirectRedshiftClient {
     });
   }
 
-  private static void dateRow(SXSSFSheet sheet, CellStyle cellStyle, int rowIndex, ResultSet rs)
+  private void dateRow(SXSSFSheet sheet, CellStyle cellStyle, int rowIndex, ResultSet rs)
       throws SQLException {
     SXSSFRow row = sheet.createRow(rowIndex);
 
@@ -233,7 +244,7 @@ public class DirectRedshiftClient {
         "step10_qty", "step30_qty", "step40_qty", "step50_qty"
     };
     IntStream.range(0, salesStepColumns.length).forEach(salesStepColumnIndex -> {
-      int offset = 7 + (salesStepColumnIndex * SALES_DAYS);
+      int offset = 7 + (salesStepColumnIndex * salesDays);
       String stepData = null;
       try {
         stepData = rs.getString(salesStepColumns[salesStepColumnIndex]);
@@ -246,7 +257,7 @@ public class DirectRedshiftClient {
 
         String[] split = dateAndQty.split(",");
         String date = split[0];
-        int days = SALES_START_DATE
+        int days = salesStartDate
             .until(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))).getDays();
 
         SXSSFCell cell = row.createCell(offset + days, CellType.NUMERIC);
@@ -260,8 +271,8 @@ public class DirectRedshiftClient {
         "step60_qty", "step70_qty", "step80_qty"
     };
     IntStream.range(0, forecastStepColumns.length).forEach(forecastStepColumnIndex -> {
-      int offset = 7 + (4 * SALES_DAYS) + (forecastStepColumnIndex * FORECAST_DAYS);
-      String stepData = null;
+      int offset = 7 + (4 * salesDays) + (forecastStepColumnIndex * forecastDays);
+      String stepData;
       try {
         stepData = rs.getString(forecastStepColumns[forecastStepColumnIndex]);
       } catch (SQLException e) {
@@ -273,7 +284,7 @@ public class DirectRedshiftClient {
 
         String[] split = dateAndQty.split(",");
         String date = split[0];
-        int days = FORECAST_START_DATE
+        int days = forecastStartDate
             .until(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))).getDays();
 
         SXSSFCell cell = row.createCell(offset + days, CellType.NUMERIC);
@@ -283,11 +294,10 @@ public class DirectRedshiftClient {
     });
   }
 
-  private static void mergeCell(Cell cell, int cols) {
+  private void mergeCell(Cell cell, int cols) {
     CellRangeAddress cellRangeAddress = new CellRangeAddress(
         cell.getRow().getRowNum(), cell.getRow().getRowNum(),
         cell.getColumnIndex(), (cell.getColumnIndex() + cols - 1));
-    //merge cell
     cell.getSheet().addMergedRegion(cellRangeAddress);
   }
 }

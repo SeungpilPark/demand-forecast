@@ -3,6 +3,7 @@ package com.woowahan.market.forecast.direct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -28,18 +29,17 @@ public class DirectAwsS3File {
     this.bucketName = bucketName;
   }
 
-  public void createExcel(SXSSFWorkbook workbook)
+  public void uploadExcel(SXSSFWorkbook workbook, String jobId)
       throws IOException {
 
-    String randomFileName = UUID.randomUUID().toString() + ".xlsx";
-    File file = new File("/mnt/efs/temp/" + randomFileName);
+    String fileName = jobId + ".xlsx";
+    File file = new File("/mnt/efs/temp/" + fileName);
     FileOutputStream fos = new FileOutputStream(file);
     workbook.write(fos);
     fos.close();
 
-    String fileName = "forecast.xlsx";
     //create s3 path
-    String path = "test/" + fileName;
+    String path = "forecast/excel/" + fileName;
     PutObjectRequest putObjectRequest = PutObjectRequest.builder()
         .bucket(bucketName)
         .key(path)

@@ -7,33 +7,34 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.woowahan.market.forecast.context.ContextHolder;
 import com.woowahan.market.forecast.direct.DirectAwsS3File;
 import com.woowahan.market.forecast.direct.DirectRedshiftClient;
-import java.util.Map;
+import com.woowahan.market.forecast.direct.ExcelRequest;
 
 /**
  * Handler for requests to Lambda function.
  */
-public class App implements RequestHandler<Map, Object> {
+public class App implements RequestHandler<ExcelRequest, Object> {
 
 
-  public Object handleRequest(Map input, Context context) {
+  public Object handleRequest(ExcelRequest excelRequest, Context context) {
     ContextHolder.setContext(context);
 
     LambdaLogger logger = context.getLogger();
     try {
-      logger.log(new ObjectMapper().writeValueAsString(input));
+      logger.log(new ObjectMapper().writeValueAsString(excelRequest));
 
       DirectAwsS3File awsS3File = new DirectAwsS3File("mz.spectrumdb");
-      awsS3File.createExcel(
-          DirectRedshiftClient.connectCluster(
+      awsS3File.uploadExcel(
+          new DirectRedshiftClient(
+              excelRequest,
               System.getenv("RedshiftJdbcUrl"),
               System.getenv("RedshiftUser"),
-              System.getenv("RedshiftPassword"),
-              Integer.parseInt(System.getenv("RedshiftLimit"))
-          )
+              System.getenv("RedshiftPassword")
+          ).generateExcel(),
+          excelRequest.getJobId()
       );
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
-    return input;
+    return excelRequest;
   }
 }
