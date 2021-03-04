@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   sam-forecast
 
-  Sample SAM Template for sam-forecast
+  SAM Template for sam-forecast
 
 Parameters:
   SecurityGroupIds:
@@ -16,19 +16,19 @@ Parameters:
 
   LambdaRoleArn:
     Type: String
-    Default: arn:aws:iam::983654105819:role/ROLE-LAMBDA-FORECAST
+    Default: arn:aws:iam::983654105819:role/ROLE-FORECAST-LAMBDA
 
   RedshiftJdbcUrl:
     Type: String
     Default: jdbc:redshift://forecast-cluster.ctv9ma8h2icp.ap-northeast-2.redshift.amazonaws.com:5439/dev
 
   RedshiftUser:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Default: RedshiftUser
+    Type: String
+    Default: root
 
   RedshiftPassword:
-    Type: 'AWS::SSM::Parameter::Value<String>'
-    Default: RedshiftPassword
+    Type: String
+    Default: '!Gosu23546'
 
   ForecastBucket:
     Type: String
@@ -68,19 +68,6 @@ Resources:
       DockerTag: java11-gradle-v1
       DockerContext: ./ForecastExcelFunction
       Dockerfile: Dockerfile
-
-  ForecastExcelFunctionAsyncConfig:
-    Type: AWS::Lambda::EventInvokeConfig
-    Properties:
-      DestinationConfig:
-        OnFailure:
-          Destination: arn:aws:sqs:ap-northeast-2:983654105819:ForecastExcelFunctionDestination
-        OnSuccess:
-          Destination: arn:aws:sqs:ap-northeast-2:983654105819:ForecastExcelFunctionDestination
-      FunctionName: !Ref ForecastExcelFunction
-      MaximumEventAgeInSeconds: 900
-      MaximumRetryAttempts: 1
-      Qualifier: "$LATEST"
 
 Outputs:
   ForecastExcelFunction:

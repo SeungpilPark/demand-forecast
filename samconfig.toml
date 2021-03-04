@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "sam-forecast"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-2mftlkyfhxpu"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-forecast"
 s3_prefix = "sam-forecast"
 region = "ap-northeast-2"
 confirm_changeset = true
