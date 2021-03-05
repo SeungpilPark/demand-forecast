@@ -22,7 +22,7 @@ public class App implements RequestHandler<ExcelRequest, Object> {
     try {
       logger.log(new ObjectMapper().writeValueAsString(excelRequest));
 
-      DirectAwsS3File awsS3File = new DirectAwsS3File("mz.spectrumdb");
+      DirectAwsS3File awsS3File = new DirectAwsS3File(System.getenv("ForecastBucket"));
       awsS3File.uploadExcel(
           new DirectRedshiftClient(
               excelRequest,

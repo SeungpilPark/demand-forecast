@@ -10,7 +10,7 @@ $ sam deploy --no-confirm-changeset
 ## 스택삭제
 
 ```shell script
-$ aws cloudformation delete-stack --stack-name sam-forecast
+$ aws cloudformation delete-stack --stack-name bmart-fulfillment-forecast
 ```
 
 ## 컨테이너 내부 확인

@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  sam-forecast
+  bmart-fulfillment-forecast
 
-  SAM Template for sam-forecast
+  SAM Template for bmart-fulfillment-forecast
 
 Parameters:
   SecurityGroupIds:
@@ -20,7 +20,7 @@ Parameters:
 
   RedshiftJdbcUrl:
     Type: String
-    Default: jdbc:redshift://forecast-cluster.ctv9ma8h2icp.ap-northeast-2.redshift.amazonaws.com:5439/dev
+    Default: jdbc:redshift://bmart-fulfillment-forecast-cluster.ctv9ma8h2icp.ap-northeast-2.redshift.amazonaws.com:5439/dev
 
   RedshiftUser:
     Type: String
@@ -32,11 +32,11 @@ Parameters:
 
   ForecastBucket:
     Type: String
-    Default: mz.spectrumdb
+    Default: bmart-fulfillment-s3
 
   EfsAccessPoint:
     Type: String
-    Default: arn:aws:elasticfilesystem:ap-northeast-2:983654105819:access-point/fsap-05a58ed5f07eb4193
+    Default: arn:aws:elasticfilesystem:ap-northeast-2:983654105819:access-point/fsap-09403dcbe9c5a7e31
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -50,7 +50,7 @@ Resources:
   ForecastExcelFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      FunctionName: ForecastExcelFunction
+      FunctionName: bmart-fulfillment-forecast-excel
       Role: !Ref LambdaRoleArn
       PackageType: Image
       MemorySize: 10240

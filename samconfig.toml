@@ -2,10 +2,10 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "sam-forecast"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-forecast"
-s3_prefix = "sam-forecast"
+stack_name = "bmart-fulfillment-forecast"
+s3_bucket = "bmart-fulfillment-s3"
+s3_prefix = "cloudformation-forecast"
 region = "ap-northeast-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-image_repositories = ["ForecastExcelFunction=983654105819.dkr.ecr.ap-northeast-2.amazonaws.com/sam-forecast-excel"]
+image_repositories = ["ForecastExcelFunction=983654105819.dkr.ecr.ap-northeast-2.amazonaws.com/bmart-fulfillment-forecast-excel"]
